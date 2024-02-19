@@ -17,21 +17,20 @@ macro_rules! either {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Op {
-    Lft,
-    Rit,
-    Inc,
-    Dec,
+    Mov, // move memory pointer
+    Add, // add to memory
     Prt,
     Inp,
     Lst,
     Led,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ins {
     op: Op,
-    arg: usize,
+    arg: i64,
 }
 
 fn main() {

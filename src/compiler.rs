@@ -112,38 +112,27 @@ pub fn compile(program: Vec<Ins>, file_name: &str) {
 
     let mut byte_count: u64 = 0;
     let mut program_table: Vec<u64> = Vec::new();
-    // let program_table: Vec<(u64, u64)> = Vec::new();
 
     for ins in program {
         match ins.op {
-            Op::Lft => {
+            Op::Mov => {
                 program_table.push(byte_count);
-                let i = vec![
-                    0x48, 0x83, 0xEB, 0x01, // sub rbx, 1
-                ];
-                byte_count += i.len() as u64;
-                output.push(i);
-            }
-            Op::Rit => {
-                program_table.push(byte_count);
-                let i = vec![
-                    0x48, 0x83, 0xC3, 0x01, // add rbx, 1
-                ];
-                byte_count += i.len() as u64;
 
-                output.push(i);
-            }
-            Op::Inc => {
+                let arg=  (ins.arg as i32).to_le_bytes();
+
                 let i = vec![
-                    0xFE, 0x84, 0x1D, 0xC8, 0x8A, 0xFF, 0xFF, // inc byte ptr [rbp-30008+rbx]
+                    0x48, 0x81, 0xC3, arg[0], arg[1], arg[2], arg[3] // add rbx, arg
                 ];
-                program_table.push(byte_count);
+
                 byte_count += i.len() as u64;
                 output.push(i);
             }
-            Op::Dec => {
+            Op::Add => {
+
+                let arg =  (ins.arg as i8).to_le_bytes();
+
                 let i = vec![
-                    0xFE, 0x8C, 0x1D, 0xC8, 0x8A, 0xFF, 0xFF, // dec byte ptr [rbp-30008+rbx]
+                    0x80, 0x84, 0x1D, 0xC8, 0x8A, 0xFF, 0xFF, arg[0] // add byte ptr [rbp-30008+rbx], arg
                 ];
                 program_table.push(byte_count);
                 byte_count += i.len() as u64;
@@ -186,7 +175,7 @@ pub fn compile(program: Vec<Ins>, file_name: &str) {
                 output.push(i);
             }
             Op::Led => {
-                let where_to_jump = program_table[ins.arg];
+                let where_to_jump = program_table[ins.arg as usize];
                 let distance = byte_count as i32 - where_to_jump as i32;
 
                 let backward = (-(distance)).to_le_bytes();
@@ -216,7 +205,7 @@ pub fn compile(program: Vec<Ins>, file_name: &str) {
                     0x0F, 0x84, forward[0], forward[1], forward[2], forward[3], // je xxxxx
                 ];
 
-                output[ins.arg] = j;
+                output[ins.arg as usize] = j;
 
                 program_table.push(byte_count);
                 byte_count += i.len() as u64;
